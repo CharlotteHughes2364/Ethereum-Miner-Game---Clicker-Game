@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ethereum Miner Game - Clicker Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+--eth-primary:#627EEA;--eth-dark:#3C3C3D;--eth-light:#A2B5FF;
+--bg-deep:#0a0a1a;--bg-mid:#0f0f2e;--bg-card:#12122a;--bg-card-hover:#1a1a3e;
+--gold:#FFD700;--gold-dark:#B8960F;--neon-cyan:#00f0ff;--neon-purple:#b400ff;
+--neon-green:#00ff88;--neon-red:#ff3366;--neon-orange:#ff8c00;
+--text-primary:#e8e8ff;--text-secondary:#8888aa;--text-dim:#555577;
+--border:#2a2a4a;--border-glow:#627EEA44;
+}
+html{font-size:14px;scrollbar-width:thin;scrollbar-color:var(--eth-primary) var(--bg-deep)}
+body{font-family:'Rajdhani',sans-serif;background:var(--bg-deep);color:var(--text-primary);min-height:100vh;overflow-x:hidden;position:relative}
+body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at 20% 50%,#627EEA08 0%,transparent 50%),radial-gradient(ellipse at 80% 20%,#b400ff06 0%,transparent 50%),radial-gradient(ellipse at 50% 80%,#00f0ff04 0%,transparent 50%);pointer-events:none;z-index:0}
+
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg-deep)}::-webkit-scrollbar-thumb{background:var(--eth-primary);border-radius:3px}
+
+#particles-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+
+.app{position:relative;z-index:1;display:grid;grid-template-columns:320px 1fr 340px;grid-template-rows:auto 1fr auto;min-height:100vh;gap:0}
+
+header{grid-column:1/-1;padding:12px 30px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(180deg,#12122aee 0%,#0a0a1aee 100%);border-bottom:1px solid var(--border);backdrop-filter:blur(20px);position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-icon{width:42px;height:42px;position:relative}
+.logo-icon svg{width:100%;height:100%;filter:drop-shadow(0 0 10px #627EEA88)}
+.logo h1{font-family:'Orbitron',monospace;font-size:1.3rem;font-weight:800;background:linear-gradient(135deg,var(--eth-primary),var(--neon-cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:2px}
+.logo .subtitle{font-family:'Share Tech Mono',monospace;font-size:.65rem;color:var(--text-dim);letter-spacing:4px;text-transform:uppercase}
+.header-stats{display:flex;gap:24px;align-items:center}
+.header-stat{text-align:center}
+.header-stat .label{font-size:.6rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:2px;font-family:'Share Tech Mono',monospace}
+.header-stat .value{font-family:'Orbitron',monospace;font-size:1rem;color:var(--eth-light);font-weight:700}
+.prestige-display .value{color:var(--gold)!important;text-shadow:0 0 10px #FFD70044}
+.header-actions{display:flex;gap:8px}
+.header-btn{background:var(--bg-card);border:1px solid var(--border);color:var(--text-secondary);padding:8px 14px;border-radius:6px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:.8rem;font-weight:600;transition:all .2s;display:flex;align-items:center;gap:6px}
+.header-btn:hover{background:var(--bg-card-hover);color:var(--text-primary);border-color:var(--eth-primary);box-shadow:0 0 15px var(--border-glow)}
+.header-btn.danger:hover{border-color:var(--neon-red);box-shadow:0 0 15px #ff336633}
+
+.sidebar-left{background:linear-gradient(180deg,#0d0d22 0%,#0a0a1a 100%);border-right:1px solid var(--border);overflow-y:auto;padding:16px;max-height:calc(100vh - 60px)}
+.sidebar-left::-webkit-scrollbar{width:4px}
+.sidebar-left::-webkit-scrollbar-thumb{background:var(--eth-primary);border-radius:2px}
+
+.panel-title{font-family:'Orbitron',monospace;font-size:.7rem;letter-spacing:3px;text-transform:uppercase;color:var(--text-dim);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.panel-title::before{content:'';flex:0 0 3px;height:14px;background:var(--eth-primary);border-radius:2px}
+
+.tab-bar{display:flex;gap:2px;margin-bottom:16px;background:var(--bg-deep);border-radius:8px;padding:3px}
+.tab-btn{flex:1;padding:8px 4px;border:none;background:transparent;color:var(--text-dim);font-family:'Rajdhani',sans-serif;font-size:.75rem;font-weight:600;cursor:pointer;border-radius:6px;transition:all .2s;text-transform:uppercase;letter-spacing:1px}
+.tab-btn.active{background:linear-gradient(135deg,var(--eth-primary),#4a5fd8);color:#fff;box-shadow:0 2px 10px #627EEA44}
+.tab-btn:hover:not(.active){color:var(--text-secondary);background:#ffffff06}
+
+.upgrade-list{display:flex;flex-direction:column;gap:8px}
+.upgrade-card{background:linear-gradient(135deg,var(--bg-card),#0e0e24);border:1px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;transition:all .25s;position:relative;overflow:hidden}
+.upgrade-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--eth-primary),transparent);opacity:0;transition:opacity .25s}
+.upgrade-card:hover{border-color:var(--eth-primary);transform:translateX(3px);box-shadow:0 4px 20px #627EEA15}
+.upgrade-card:hover::before{opacity:1}
+.upgrade-card.cannot-afford{opacity:.45;cursor:not-allowed}
+.upgrade-card.cannot-afford:hover{transform:none;box-shadow:none;border-color:var(--border)}
+.upgrade-header{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.upgrade-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
+.upgrade-info{flex:1;min-width:0}
+.upgrade-name{font-family:'Orbitron',monospace;font-size:.75rem;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.upgrade-level{font-size:.6rem;color:var(--text-dim);font-family:'Share Tech Mono',monospace}
+.upgrade-desc{font-size:.7rem;color:var(--text-secondary);line-height:1.3;margin-bottom:8px}
+.upgrade-bottom{display:flex;justify-content:space-between;align-items:center}
+.upgrade-cost{font-family:'Orbitron',monospace;font-size:.8rem;font-weight:700;color:var(--neon-cyan)}
+.upgrade-pps{font-size:.6rem;color:var(--neon-green);font-family:'Share Tech Mono',monospace}
+.upgrade-progress{height:2px;background:var(--bg-deep);border-radius:1px;margin-top:8px;overflow:hidden}
+.upgrade-progress-fill{height:100%;background:linear-gradient(90deg,var(--eth-primary),var(--neon-cyan));border-radius:1px;transition:width .3s}
+
+.main-area{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;position:relative;min-height:calc(100vh - 60px)}
+
+.mining-zone{position:relative;display:flex;flex-direction:column;align-items:center;gap:20px}
+.pps-display{font-family:'Share Tech Mono',monospace;font-size:.8rem;color:var(--text-dim);letter-spacing:2px}
+.pps-display span{color:var(--neon-green);font-weight:700}
+
+.eth-display{text-align:center;margin-bottom:10px}
+.eth-amount{font-family:'Orbitron',monospace;font-size:3.5rem;font-weight:900;background:linear-gradient(135deg,#fff 0%,var(--eth-light) 40%,var(--eth-primary) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1.1;text-shadow:none;transition:transform .1s}
+.eth-amount.pop{transform:scale(1.03)}
+.eth-label{font-family:'Share Tech Mono',monospace;font-size:.75rem;color:var(--text-dim);letter-spacing:5px;text-transform:uppercase;margin-top:4px}
+.eth-usd{font-family:'Share Tech Mono',monospace;font-size:.8rem;color:var(--text-secondary);margin-top:6px}
+
+.pickaxe-container{position:relative;width:260px;height:260px;display:flex;align-items:center;justify-content:center}
+.pickaxe-ring{position:absolute;border-radius:50%;border:2px solid transparent;animation:spin 8s linear infinite}
+.pickaxe-ring.ring-1{width:100%;height:100%;border-top-color:var(--eth-primary);border-bottom-color:var(--eth-primary);opacity:.3}
+.pickaxe-ring.ring-2{width:85%;height:85%;border-left-color:var(--neon-cyan);border-right-color:var(--neon-purple);animation-direction:reverse;animation-duration:6s;opacity:.25}
+.pickaxe-ring.ring-3{width:70%;height:70%;border-top-color:var(--neon-green);animation-duration:4s;opacity:.2}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.pickaxe-btn{width:180px;height:180px;border-radius:50%;border:3px solid var(--eth-primary);background:linear-gradient(135deg,#1a1a3e,#0d0d2a,#1a1a3e);cursor:pointer;position:relative;transition:all .15s;display:flex;align-items:center;justify-content:center;z-index:2;box-shadow:0 0 40px #627EEA22,inset 0 0 40px #627EEA11}
+.pickaxe-btn:hover{transform:scale(1.04);box-shadow:0 0 60px #627EEA44,inset 0 0 50px #627EEA22;border-color:var(--neon-cyan)}
+.pickaxe-btn:active{transform:scale(.94);box-shadow:0 0 80px #627EEA66,inset 0 0 60px #627EEA33;border-color:#fff}
+.pickaxe-btn .eth-icon{width:80px;height:80px;transition:transform .15s}
+.pickaxe-btn:active .eth-icon{transform:scale(.85) rotate(-5deg)}
+.pickaxe-btn .eth-icon svg{width:100%;height:100%;filter:drop-shadow(0 0 20px #627EEA88)}
+
+.click-text{position:absolute;font-family:'Orbitron',monospace;font-weight:900;font-size:1.2rem;color:var(--gold);pointer-events:none;animation:floatUp 1.2s ease-out forwards;z-index:10;text-shadow:0 0 10px #FFD70088}
+@keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1)}50%{opacity:1;transform:translateY(-40px) scale(1.1)}100%{opacity:0;transform:translateY(-80px) scale(.8)}}
+
+.mine-particles{position:absolute;width:100%;height:100%;pointer-events:none;z-index:5}
+.mine-particle{position:absolute;width:4px;height:4px;border-radius:50%;animation:particleFly 1s ease-out forwards}
+@keyframes particleFly{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--px),var(--py)) scale(0)}}
+
+.sidebar-right{background:linear-gradient(180deg,#0d0d22 0%,#0a0a1a 100%);border-left:1px solid var(--border);overflow-y:auto;padding:16px;max-height:calc(100vh - 60px)}
+.sidebar-right::-webkit-scrollbar{width:4px}
+.sidebar-right::-webkit-scrollbar-thumb{background:var(--eth-primary);border-radius:2px}
+
+.achievement-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.achievement{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px 8px;text-align:center;transition:all .3s;position:relative;overflow:hidden}
+.achievement.unlocked{border-color:var(--gold);background:linear-gradient(135deg,#1a1a10,#12120a)}
+.achievement.unlocked::after{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:conic-gradient(transparent,#FFD70022,transparent,#FFD70022,transparent);animation:achieveShine 3s linear infinite}
+@keyframes achieveShine{to{transform:rotate(360deg)}}
+.achievement-icon{font-size:1.3rem;margin-bottom:4px;position:relative;z-index:1}
+.achievement-name{font-family:'Orbitron',monospace;font-size:.55rem;font-weight:600;color:var(--text-secondary);letter-spacing:1px;position:relative;z-index:1}
+.achievement.unlocked .achievement-name{color:var(--gold)}
+.achievement-locked .achievement-icon{filter:grayscale(1) brightness(.3)}
+
+.stats-list{display:flex;flex-direction:column;gap:6px}
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--bg-card);border-radius:6px;border:1px solid var(--border)}
+.stat-label{font-size:.7rem;color:var(--text-dim);font-family:'Share Tech Mono',monospace;text-transform:uppercase;letter-spacing:1px}
+.stat-value{font-family:'Orbitron',monospace;font-size:.75rem;color:var(--eth-light);font-weight:600}
+
+footer{grid-column:1/-1;padding:8px 30px;background:#0a0a1aee;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-family:'Share Tech Mono',monospace;font-size:.65rem;color:var(--text-dim);backdrop-filter:blur(10px)}
+footer .version{letter-spacing:2px}
+
+.notification{position:fixed;top:80px;right:20px;background:linear-gradient(135deg,#1a1a3eee,#12122aee);border:1px solid var(--gold);border-radius:10px;padding:14px 20px;z-index:1000;animation:slideIn .4s ease-out,slideOut .4s ease-in 3.6s forwards;box-shadow:0 4px 30px #FFD70022;max-width:320px}
+.notification .title{font-family:'Orbitron',monospace;font-size:.7rem;font-weight:700;color:var(--gold);letter-spacing:2px;margin-bottom:4px}
+.notification .desc{font-size:.75rem;color:var(--text-secondary)}
+@keyframes slideIn{from{opacity:0;transform:translateX(100px)}to{opacity:1;transform:translateX(0)}}
+@keyframes slideOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(100px)}}
+
+.prestige-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#0a0a1acc;z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(8px)}
+.prestige-modal.show{display:flex}
+.prestige-content{background:linear-gradient(135deg,var(--bg-card),#0a0a1a);border:2px solid var(--gold);border-radius:16px;padding:40px;text-align:center;max-width:420px;width:90%;box-shadow:0 0 80px #FFD70022}
+.prestige-content h2{font-family:'Orbitron',monospace;font-size:1.5rem;color:var(--gold);margin-bottom:10px;text-shadow:0 0 20px #FFD70044}
+.prestige-content p{color:var(--text-secondary);margin-bottom:20px;line-height:1.6}
+.prestige-content .reward{font-family:'Orbitron',monospace;font-size:2rem;color:var(--gold);font-weight:900;margin:16px 0}
+.prestige-btns{display:flex;gap:12px;justify-content:center;margin-top:20px}
+.p-btn{padding:12px 28px;border-radius:8px;border:1px solid;cursor:pointer;font-family:'Orbitron',monospace;font-size:.8rem;font-weight:700;transition:all .2s;letter-spacing:1px}
+.p-btn.confirm{background:linear-gradient(135deg,var(--gold-dark),var(--gold));color:#0a0a1a;border-color:var(--gold)}
+.p-btn.confirm:hover{box-shadow:0 0 30px #FFD70044;transform:scale(1.05)}
+.p-btn.cancel{background:transparent;color:var(--text-secondary);border-color:var(--border)}
+.p-btn.cancel:hover{border-color:var(--text-secondary);color:var(--text-primary)}
+
+.format-eth{font-family:'Orbitron',monospace}
+
+@media(max-width:1100px){.app{grid-template-columns:1fr;grid-template-rows:auto auto 1fr auto}.sidebar-left,.sidebar-right{max-height:none;border:none;border-bottom:1px solid var(--border)}}
+
+.shake{animation:shake .15s ease-in-out}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+
+.glow-pulse{animation:glowPulse 2s ease-in-out infinite}
+@keyframes glowPulse{0%,100%{box-shadow:0 0 20px #627EEA22}50%{box-shadow:0 0 40px #627EEA44}}
+
+.stat-section{margin-bottom:20px}
+</style>
+</head>
+<body>
+<canvas id="particles-canvas"></canvas>
+
+<div class="app">
+<header>
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 320 512" fill="none"><path d="M311.9 260.8L160 353.6 8 260.8 160 0l151.9 260.8zM160 381.4L8 288.6 160 512l152-223.4-152 92.8z" fill="url(#ethGrad)"/><defs><linearGradient id="ethGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#627EEA"/><stop offset="100%" stop-color="#A2B5FF"/></linearGradient></defs></svg>
+    </div>
+    <div>
+      <h1>ETHEREUM MINER</h1>
+      <div class="subtitle">Clicker Game</div>
+    </div>
+  </div>
+  <div class="header-stats">
+    <div class="header-stat">
+      <div class="label">ETH/sec</div>
+      <div class="value" id="h-pps">0.00</div>
+    </div>
+    <div class="header-stat prestige-display">
+      <div class="label">Prestige</div>
+      <div class="value" id="h-prestige">0</div>
+    </div>
+    <div class="header-stat">
+      <div class="label">Multiplier</div>
+      <div class="value" id="h-multi">x1.00</div>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button class="header-btn" onclick="openPrestige()" style="border-color:var(--gold);color:var(--gold)">⭐ Prestige</button>
+    <button class="header-btn" onclick="saveGame()">Save</button>
+    <button class="header-btn" onclick="exportSave()">Export</button>
+    <button class="header-btn" onclick="importSave()">Import</button>
+    <button class="header-btn danger" onclick="resetGame()">Reset</button>
+  </div>
+</header>
+
+<div class="sidebar-left">
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('click',this)">Upgrades</button>
+    <button class="tab-btn" onclick="switchTab('auto',this)">Auto</button>
+    <button class="tab-btn" onclick="switchTab('special',this)">Special</button>
+  </div>
+  <div id="tab-click" class="upgrade-list"></div>
+  <div id="tab-auto" class="upgrade-list" style="display:none"></div>
+  <div id="tab-special" class="upgrade-list" style="display:none"></div>
+</div>
+
+<div class="main-area">
+  <div class="eth-display">
+    <div class="eth-amount" id="eth-display">0.0000</div>
+    <div class="eth-label">Ethereum</div>
+    <div class="eth-usd" id="eth-usd">= $0.00 USD</div>
+  </div>
+  <div style="display:flex;gap:20px;margin-top:8px">
+    <div style="text-align:center"><div style="font-family:'Share Tech Mono',monospace;font-size:.55rem;color:var(--text-dim);letter-spacing:2px;text-transform:uppercase">Per Click</div><div style="font-family:'Orbitron',monospace;font-size:.9rem;color:var(--neon-cyan);font-weight:700" id="click-display">1.00</div></div>
+    <div style="text-align:center"><div style="font-family:'Share Tech Mono',monospace;font-size:.55rem;color:var(--text-dim);letter-spacing:2px;text-transform:uppercase">Total Mined</div><div style="font-family:'Orbitron',monospace;font-size:.9rem;color:var(--neon-green);font-weight:700" id="total-display">0.00</div></div>
+  </div>
+  <div class="mining-zone">
+    <div class="pps-display">Mining at <span id="pps-main">0.00</span> ETH/sec</div>
+    <div class="pickaxe-container">
+      <div class="pickaxe-ring ring-1"></div>
+      <div class="pickaxe-ring ring-2"></div>
+      <div class="pickaxe-ring ring-3"></div>
+      <div class="pickaxe-btn glow-pulse" id="mine-btn">
+        <div class="eth-icon">
+          <svg viewBox="0 0 320 512" fill="none"><path d="M311.9 260.8L160 353.6 8 260.8 160 0l151.9 260.8zM160 381.4L8 288.6 160 512l152-223.4-152 92.8z" fill="url(#ethGrad2)"/><defs><linearGradient id="ethGrad2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fff"/><stop offset="50%" stop-color="#A2B5FF"/><stop offset="100%" stop-color="#627EEA"/></linearGradient></defs></svg>
+        </div>
+      </div>
+      <div class="mine-particles" id="mine-particles"></div>
+    </div>
+  </div>
+</div>
+
+<div class="sidebar-right">
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchRightTab('achievements',this)">Achievements</button>
+    <button class="tab-btn" onclick="switchRightTab('stats',this)">Stats</button>
+  </div>
+  <div id="tab-achievements">
+    <div class="achievement-grid" id="achievement-grid"></div>
+  </div>
+  <div id="tab-stats" style="display:none">
+    <div class="stats-list" id="stats-list"></div>
+  </div>
+</div>
+
+<footer>
+  <span class="version">v1.0.0</span>
+  <span id="save-timer">Auto-save in 30s</span>
+  <span>Auto-saves every 30 seconds</span>
+</footer>
+</div>
+
+<div class="prestige-modal" id="prestige-modal">
+  <div class="prestige-content">
+    <h2>PRESTIGE</h2>
+    <p>Reset your progress to gain permanent prestige points that multiply ALL your earnings!</p>
+    <p>You need at least <strong style="color:var(--gold)">1,000,000 ETH</strong> mined total to prestige.</p>
+    <div class="reward" id="prestige-reward">+0 Prestige</div>
+    <p style="font-size:.75rem;color:var(--text-dim)">Each prestige point gives +10% earnings (x1 base)</p>
+    <div class="prestige-btns">
+      <button class="p-btn confirm" onclick="doPrestige()">PRESTIGE</button>
+      <button class="p-btn cancel" onclick="closePrestige()">CANCEL</button>
+    </div>
+  </div>
+</div>
+
+<div id="notifications"></div>
+
+<script>
+const ETH_PRICE = 3500;
+
+const UPGRADES = {
+  click: [
+    {id:'click1',name:'Better Pickaxe',desc:'A sharper pickaxe for more ETH per click',baseCost:15,costMult:1.12,baseReward:1,icon:'⛏️',color:'#627EEA'},
+    {id:'click2',name:'Power Gloves',desc:'Enhanced gloves multiply click power',baseCost:100,costMult:1.14,baseReward:5,icon:'🧤',color:'#00f0ff'},
+    {id:'click3',name:'Diamond Drill',desc:'Precision drilling for maximum yield',baseCost:1100,costMult:1.15,baseReward:25,icon:'💎',color:'#b400ff'},
+    {id:'click4',name:'Quantum Hammer',desc:'Hammer that exists in multiple states',baseCost:12000,costMult:1.16,baseReward:150,icon:'🔨',color:'#00ff88'},
+    {id:'click5',name:'Void Excavator',desc:'Tears through the blockchain itself',baseCost:130000,costMult:1.17,baseReward:1000,icon:'🌀',color:'#ff8c00'},
+  ],
+  auto: [
+    {id:'auto1',name:'Mining Script',desc:'A simple script that auto-mines slowly',baseCost:60,costMult:1.12,baseReward:.1,icon:'📜',color:'#627EEA'},
+    {id:'auto2',name:'GPU Rig',desc:'Graphics cards dedicated to mining',baseCost:500,costMult:1.13,baseReward:.8,icon:'🖥️',color:'#00f0ff'},
+    {id:'auto3',name:'Mining Farm',desc:'A warehouse full of mining rigs',baseCost:5000,costMult:1.14,baseReward:5,icon:'🏭',color:'#00ff88'},
+    {id:'auto4',name:'ASIC Miner',desc:'Application-specific integrated circuit',baseCost:50000,costMult:1.15,baseReward:30,icon:'⚡',color:'#b400ff'},
+    {id:'auto5',name:'Data Center',desc:'Massive data center humming with power',baseCost:500000,costMult:1.16,baseReward:200,icon:'🏗️',color:'#ff8c00'},
+    {id:'auto6',name:'Quantum Farm',desc:'Quantum computing mining operation',baseCost:5000000,costMult:1.17,baseReward:1500,icon:'⚛️',color:'#ff3366'},
+    {id:'auto7',name:'Orbital Miner',desc:'Mining satellite in Earth orbit',baseCost:50000000,costMult:1.18,baseReward:10000,icon:'🛰️',color:'#FFD700'},
+  ],
+  special: [
+    {id:'sp1',name:'Overclock',desc:'+25% click power',baseCost:500,costMult:2.5,baseReward:0,icon:'🔥',color:'#ff3366',effect:'clickMult',value:.25},
+    {id:'sp2',name:'Turbo Mode',desc:'+25% auto miner speed',baseCost:2000,costMult:3,baseReward:0,icon:'🚀',color:'#00f0ff',effect:'autoMult',value:.25},
+    {id:'sp3',name:'Lucky Strike',desc:'10% chance for 10x click',baseCost:10000,costMult:4,baseReward:0,icon:'🍀',color:'#00ff88',effect:'lucky',value:.1},
+    {id:'sp4',name:'Blockchain Boost',desc:'+50% all earnings',baseCost:100000,costMult:5,baseReward:0,icon:'⛓️',color:'#b400ff',effect:'allMult',value:.5},
+    {id:'sp5',name:'DeFi Staking',desc:'+100% passive income',baseCost:1000000,costMult:6,baseReward:0,icon:'🏦',color:'#FFD700',effect:'passiveMult',value:1},
+  ]
+};
+
+const ACHIEVEMENTS = [
+  {id:'a1',name:'First Block',desc:'Mine your first ETH',icon:'🎮',check:s=>s.totalClicked>=1},
+  {id:'a2',name:'Clicker',desc:'Click 100 times',icon:'👆',check:s=>s.totalClicks>=100},
+  {id:'a3',name:'Spammer',desc:'Click 1,000 times',icon:'🖐️',check:s=>s.totalClicks>=1000},
+  {id:'a4',name:'No Life',desc:'Click 10,000 times',icon:'💀',check:s=>s.totalClicks>=10000},
+  {id:'a5',name:'Hodler',desc:'Have 1,000 ETH',icon:'💎',check:s=>s.eth>=1000},
+  {id:'a6',name:'Whale',desc:'Have 100,000 ETH',icon:'🐋',check:s=>s.eth>=100000},
+  {id:'a7',name:'Moon',desc:'Have 10,000,000 ETH',icon:'🌙',check:s=>s.eth>=10000000},
+  {id:'a8',name:'Rich',desc:'Have 1,000,000,000 ETH',icon:'💰',check:s=>s.eth>=1000000000},
+  {id:'a9',name:'Miner',desc:'Earn 10,000 ETH total',icon:'⛏️',check:s=>s.totalEarned>=10000},
+  {id:'a10',name:'Tycoon',desc:'Earn 10,000,000 ETH total',icon:'👑',check:s=>s.totalEarned>=10000000},
+  {id:'a11',name:'First Auto',desc:'Buy your first auto miner',icon:'🤖',check:s=>Object.values(s.upgrades).reduce((a,b)=>a+b,0)>0&&s.autoEarned>0},
+  {id:'a12',name:'Prestige!',desc:'Prestige for the first time',icon:'⭐',check:s=>s.prestige>=1},
+  {id:'a13',name:'Speed Demon',desc:'Reach 100 ETH/sec',icon:'⚡',check:s=>s.pps>=100},
+  {id:'a14',name:'Mining Lord',desc:'Reach 10,000 ETH/sec',icon:'🏆',check:s=>s.pps>=10000},
+  {id:'a15',name:'Click King',desc:'Have 100 ETH per click',icon:'🔱',check:s=>s.clickPower>=100},
+  {id:'a16',name:'Billionaire',desc:'Earn 1,000,000,000,000 total',icon:'🌟',check:s=>s.totalEarned>=1000000000000},
+];
+
+let game = {
+  eth:0,totalEarned:0,totalClicked:0,totalClicks:0,
+  upgrades:{},prestige:0,prestigePoints:0,
+  pps:0,clickPower:1,autoEarned:0,
+  achievementsUnlocked:[],lastSave:Date.now(),startTime:Date.now()
+};
+
+function init(){
+  Object.values(UPGRADES).flat().forEach(u=>{game.upgrades[u.id]=0});
+  loadGame();
+  renderUpgrades();
+  renderAchievements();
+  renderStats();
+  updateDisplay();
+  gameLoop();
+  setInterval(autoSave,30000);
+  initParticles();
+  document.getElementById('mine-btn').addEventListener('click',onMine);
+  document.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();onMine()}});
+  setInterval(()=>{if(document.getElementById('tab-stats').style.display==='block')renderStats()},1000);
+}
+
+function getUpgradeCost(upg){
+  return Math.floor(upg.baseCost*Math.pow(upg.costMult,game.upgrades[upg.id]));
+}
+
+function getClickMultiplier(){
+  let m=1;
+  UPGRADES.special.filter(u=>u.effect==='clickMult').forEach(u=>{m+=u.value*game.upgrades[u.id]});
+  m*=1+game.prestigePoints*.1;
+  return m;
+}
+
+function getAutoMultiplier(){
+  let m=1;
+  UPGRADES.special.filter(u=>u.effect==='autoMult').forEach(u=>{m+=u.value*game.upgrades[u.id]});
+  if(UPGRADES.special.find(u=>u.id==='sp5'))m+=UPGRADES.special.find(u=>u.id==='sp5').value*game.upgrades['sp5'];
+  m*=1+game.prestigePoints*.1;
+  return m;
+}
+
+function getAllMultiplier(){
+  let m=1;
+  UPGRADES.special.filter(u=>u.effect==='allMult').forEach(u=>{m+=u.value*game.upgrades[u.id]});
+  m*=1+game.prestigePoints*.1;
+  return m;
+}
+
+function calcClickPower(){
+  let base=1;
+  UPGRADES.click.forEach(u=>{base+=u.baseReward*game.upgrades[u.id]});
+  return base*getClickMultiplier()*getAllMultiplier();
+}
+
+function calcPPS(){
+  let base=0;
+  UPGRADES.auto.forEach(u=>{base+=u.baseReward*game.upgrades[u.id]});
+  return base*getAutoMultiplier()*getAllMultiplier();
+}
+
+function buyUpgrade(id){
+  const upg=Object.values(UPGRADES).flat().find(u=>u.id===id);
+  if(!upg)return;
+  const cost=getUpgradeCost(upg);
+  if(game.eth<cost)return;
+  game.eth-=cost;
+  game.upgrades[id]++;
+  game.clickPower=calcClickPower();
+  game.pps=calcPPS();
+  renderUpgrades();
+  updateDisplay();
+}
+
+function onMine(){
+  let earned=game.clickPower;
+  if(UPGRADES.special.find(u=>u.id==='sp3')&&game.upgrades.sp3>0){
+    const sp3=UPGRADES.special.find(u=>u.id==='sp3');
+    if(Math.random()<sp3.value*game.upgrades.sp3)earned*=10;
+  }
+  game.eth+=earned;
+  game.totalEarned+=earned;
+  game.totalClicked+=earned;
+  game.totalClicks++;
+  const el=document.getElementById('eth-display');
+  el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop');
+  spawnClickText(earned);
+  spawnParticles();
+  document.getElementById('mine-btn').classList.remove('shake');
+  void document.getElementById('mine-btn').offsetWidth;
+  document.getElementById('mine-btn').classList.add('shake');
+  updateDisplay();
+  checkAchievements();
+}
+
+function gameLoop(){
+  const now=performance.now();
+  if(game.pps>0){
+    const earned=game.pps/60;
+    game.eth+=earned;
+    game.totalEarned+=earned;
+    game.autoEarned+=earned;
+  }
+  game.pps=calcPPS();
+  game.clickPower=calcClickPower();
+  updateDisplay();
+  requestAnimationFrame(gameLoop);
+}
+
+function updateDisplay(){
+  document.getElementById('eth-display').textContent=formatNum(game.eth);
+  document.getElementById('eth-usd').textContent='= $'+formatNum(game.eth*ETH_PRICE)+' USD';
+  document.getElementById('h-pps').textContent=formatNum(game.pps)+'/s';
+  document.getElementById('pps-main').textContent=formatNum(game.pps);
+  document.getElementById('h-prestige').textContent=game.prestigePoints;
+  document.getElementById('h-multi').textContent='x'+(1+game.prestigePoints*.1).toFixed(2);
+  document.getElementById('click-display').textContent=formatNum(game.clickPower);
+  document.getElementById('total-display').textContent=formatNum(game.totalEarned);
+  document.querySelectorAll('.upgrade-card').forEach(card=>{
+    const id=card.dataset.id;
+    const upg=Object.values(UPGRADES).flat().find(u=>u.id===id);
+    if(upg){
+      const cost=getUpgradeCost(upg);
+      card.classList.toggle('cannot-afford',game.eth<cost);
+    }
+  });
+  checkAchievements();
+}
+
+function renderUpgrades(){
+  ['click','auto','special'].forEach(tab=>{
+    const container=document.getElementById('tab-'+tab);
+    container.innerHTML='';
+    UPGRADES[tab].forEach(upg=>{
+      const cost=getUpgradeCost(upg);
+      const lvl=game.upgrades[upg.id];
+      const card=document.createElement('div');
+      card.className='upgrade-card'+(game.eth<cost?' cannot-afford':'');
+      card.dataset.id=upg.id;
+      card.onclick=()=>buyUpgrade(upg.id);
+      let rewardText='';
+      if(tab==='click')rewardText='+'+upg.baseReward+'/click';
+      else if(tab==='auto')rewardText='+'+upg.baseReward+'/sec';
+      else rewardText=upg.effect==='lucky'?Math.round(upg.value*100*lvl)+'% chance':'+'+Math.round(upg.value*100*lvl)+'%';
+      card.innerHTML=`
+        <div class="upgrade-header">
+          <div class="upgrade-icon" style="background:${upg.color}22;border:1px solid ${upg.color}44">${upg.icon}</div>
+          <div class="upgrade-info">
+            <div class="upgrade-name">${upg.name}</div>
+            <div class="upgrade-level">LVL ${lvl}</div>
+          </div>
+        </div>
+        <div class="upgrade-desc">${upg.desc}</div>
+        <div class="upgrade-bottom">
+          <div class="upgrade-cost">${formatNum(cost)} ETH</div>
+          <div class="upgrade-pps">${rewardText}</div>
+        </div>
+        <div class="upgrade-progress"><div class="upgrade-progress-fill" style="width:${Math.min(100,(game.eth/cost)*100)}%;background:linear-gradient(90deg,${upg.color}88,${upg.color})"></div></div>`;
+      container.appendChild(card);
+    });
+  });
+}
+
+function renderAchievements(){
+  const grid=document.getElementById('achievement-grid');
+  grid.innerHTML='';
+  ACHIEVEMENTS.forEach(a=>{
+    const unlocked=game.achievementsUnlocked.includes(a.id);
+    const div=document.createElement('div');
+    div.className='achievement '+(unlocked?'unlocked':'achievement-locked');
+    div.innerHTML=`<div class="achievement-icon">${a.icon}</div><div class="achievement-name">${a.name}</div>`;
+    div.title=a.desc;
+    grid.appendChild(div);
+  });
+}
+
+function checkAchievements(){
+  let newUnlock=false;
+  ACHIEVEMENTS.forEach(a=>{
+    if(!game.achievementsUnlocked.includes(a.id)&&a.check(game)){
+      game.achievementsUnlocked.push(a.id);
+      newUnlock=true;
+      showNotification('Achievement Unlocked!',a.name+' - '+a.desc,a.icon);
+    }
+  });
+  if(newUnlock)renderAchievements();
+}
+
+function renderStats(){
+  const list=document.getElementById('stats-list');
+  const stats=[
+    ['ETH Mined',formatNum(game.totalEarned)],
+    ['ETH Per Click',formatNum(game.clickPower)],
+    ['ETH Per Second',formatNum(game.pps)],
+    ['Total Clicks',game.totalClicks.toLocaleString()],
+    ['Prestige Points',game.prestigePoints],
+    ['Achievements',game.achievementsUnlocked.length+'/'+ACHIEVEMENTS.length],
+    ['Play Time',getTimePlayed()],
+  ];
+  list.innerHTML=stats.map(s=>`<div class="stat-row"><span class="stat-label">${s[0]}</span><span class="stat-value">${s[1]}</span></div>`).join('');
+}
+
+function getTimePlayed(){
+  const s=Math.floor((Date.now()-game.startTime)/1000);
+  const h=Math.floor(s/3600);const m=Math.floor((s%3600)/60);const sec=s%60;
+  return(h>0?h+'h ':'')+m+'m '+sec+'s';
+}
+
+function formatNum(n){
+  if(n>=1e15)return(n/1e15).toFixed(2)+'Q';
+  if(n>=1e12)return(n/1e12).toFixed(2)+'T';
+  if(n>=1e9)return(n/1e9).toFixed(2)+'B';
+  if(n>=1e6)return(n/1e6).toFixed(2)+'M';
+  if(n>=1e3)return(n/1e3).toFixed(2)+'K';
+  return n.toFixed(4);
+}
+
+function spawnClickText(earned){
+  const btn=document.getElementById('mine-btn');
+  const rect=btn.getBoundingClientRect();
+  const area=btn.parentElement;
+  const txt=document.createElement('div');
+  txt.className='click-text';
+  txt.textContent='+'+formatNum(earned);
+  const angle=Math.random()*Math.PI*2;
+  const dist=60+Math.random()*40;
+  const cx=130+Math.cos(angle)*dist;
+  const cy=130+Math.sin(angle)*dist-30;
+  txt.style.left=cx+'px';txt.style.top=cy+'px';
+  area.appendChild(txt);
+  setTimeout(()=>txt.remove(),1200);
+}
+
+function spawnParticles(){
+  const area=document.getElementById('mine-particles');
+  const colors=['#627EEA','#00f0ff','#FFD700','#b400ff','#00ff88','#fff'];
+  for(let i=0;i<8;i++){
+    const p=document.createElement('div');
+    p.className='mine-particle';
+    const angle=Math.random()*Math.PI*2;
+    const dist=80+Math.random()*60;
+    p.style.setProperty('--px',Math.cos(angle)*dist+'px');
+    p.style.setProperty('--py',Math.sin(angle)*dist+'px');
+    p.style.background=colors[Math.floor(Math.random()*colors.length)];
+    p.style.left='130px';p.style.top='130px';
+    p.style.width=(2+Math.random()*4)+'px';p.style.height=p.style.width;
+    area.appendChild(p);
+    setTimeout(()=>p.remove(),1000);
+  }
+}
+
+function switchTab(tab,btn){
+  document.querySelectorAll('.sidebar-left .tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  ['click','auto','special'].forEach(t=>{
+    document.getElementById('tab-'+t).style.display=t===tab?'flex':'none';
+  });
+}
+
+function switchRightTab(tab,btn){
+  document.querySelectorAll('.sidebar-right .tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-achievements').style.display=tab==='achievements'?'block':'none';
+  document.getElementById('tab-stats').style.display=tab==='stats'?'block':'none';
+  if(tab==='stats')renderStats();
+}
+
+function showNotification(title,desc,icon=''){
+  const container=document.getElementById('notifications');
+  const n=document.createElement('div');
+  n.className='notification';
+  n.innerHTML=`<div class="title">${icon} ${title}</div><div class="desc">${desc}</div>`;
+  container.appendChild(n);
+  setTimeout(()=>n.remove(),4000);
+}
+
+function openPrestige(){
+  if(game.totalEarned<1000000){showNotification('Not Enough','You need at least 1,000,000 ETH mined total to prestige.','❌');return;}
+  const reward=Math.floor(Math.sqrt(game.totalEarned/1000000));
+  document.getElementById('prestige-reward').textContent='+'+reward+' Prestige';
+  document.getElementById('prestige-modal').classList.add('show');
+}
+function closePrestige(){document.getElementById('prestige-modal').classList.remove('show')}
+function doPrestige(){
+  const reward=Math.floor(Math.sqrt(game.totalEarned/1000000));
+  game.prestigePoints+=reward;
+  game.prestige++;
+  game.eth=0;game.totalEarned=0;game.totalClicked=0;game.totalClicks=0;game.autoEarned=0;
+  Object.keys(game.upgrades).forEach(k=>game.upgrades[k]=0);
+  game.clickPower=1;game.pps=0;
+  closePrestige();
+  renderUpgrades();renderAchievements();updateDisplay();
+  showNotification('Prestige Complete!','+'+reward+' prestige points earned! All progress reset.','⭐');
+}
+
+function saveGame(){
+  game.lastSave=Date.now();
+  localStorage.setItem('ethMinerSave',JSON.stringify(game));
+  showNotification('Game Saved','Progress saved successfully.','💾');
+}
+
+function loadGame(){
+  const save=localStorage.getItem('ethMinerSave');
+  if(save){
+    try{
+      const loaded=JSON.parse(save);
+      Object.assign(game,loaded);
+      game.clickPower=calcClickPower();
+      game.pps=calcPPS();
+      const elapsed=(Date.now()-game.lastSave)/1000;
+      if(game.pps>0&&elapsed>0){
+        const offline=game.pps*elapsed*.5;
+        game.eth+=offline;game.totalEarned+=offline;
+        if(offline>0)showNotification('Welcome Back!','Earned '+formatNum(offline)+' ETH while away!','🏠');
+      }
+    }catch(e){console.error('Load failed',e);}
+  }
+}
+
+function autoSave(){
+  game.lastSave=Date.now();
+  localStorage.setItem('ethMinerSave',JSON.stringify(game));
+  const timer=document.getElementById('save-timer');
+  timer.textContent='Saved!';
+  setTimeout(()=>timer.textContent='Auto-save in 30s',2000);
+}
+
+function exportSave(){
+  game.lastSave=Date.now();
+  const data=btoa(JSON.stringify(game));
+  navigator.clipboard.writeText(data).then(()=>showNotification('Exported','Save data copied to clipboard!','📋'));
+}
+
+function importSave(){
+  const data=prompt('Paste your save data:');
+  if(!data)return;
+  try{
+    const loaded=JSON.parse(atob(data));
+    Object.assign(game,loaded);
+    game.clickPower=calcClickPower();game.pps=calcPPS();
+    renderUpgrades();renderAchievements();updateDisplay();
+    showNotification('Imported','Save data loaded successfully!','📥');
+  }catch(e){showNotification('Error','Invalid save data.','❌');}
+}
+
+function resetGame(){
+  if(!confirm('Are you sure? This will delete ALL progress!'))return;
+  if(!confirm('Really? This cannot be undone!'))return;
+  localStorage.removeItem('ethMinerSave');
+  game={eth:0,totalEarned:0,totalClicked:0,totalClicks:0,upgrades:{},prestige:0,prestigePoints:0,pps:0,clickPower:1,autoEarned:0,achievementsUnlocked:[],lastSave:Date.now(),startTime:Date.now()};
+  Object.values(UPGRADES).flat().forEach(u=>{game.upgrades[u.id]=0});
+  renderUpgrades();renderAchievements();renderStats();updateDisplay();
+  showNotification('Reset','All progress has been deleted.','🗑️');
+}
+
+function initParticles(){
+  const canvas=document.getElementById('particles-canvas');
+  const ctx=canvas.getContext('2d');
+  let particles=[];
+  function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight}
+  window.addEventListener('resize',resize);resize();
+  for(let i=0;i<40;i++){
+    particles.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,r:Math.random()*2+.5,o:Math.random()*.3+.1});
+  }
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    particles.forEach(p=>{
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.x<0)p.x=canvas.width;if(p.x>canvas.width)p.x=0;
+      if(p.y<0)p.y=canvas.height;if(p.y>canvas.height)p.y=0;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(98,126,234,${p.o})`;ctx.fill();
+    });
+    for(let i=0;i<particles.length;i++){
+      for(let j=i+1;j<particles.length;j++){
+        const dx=particles[i].x-particles[j].x;
+        const dy=particles[i].y-particles[j].y;
+        const dist=Math.sqrt(dx*dx+dy*dy);
+        if(dist<120){
+          ctx.beginPath();ctx.moveTo(particles[i].x,particles[i].y);
+          ctx.lineTo(particles[j].x,particles[j].y);
+          ctx.strokeStyle=`rgba(98,126,234,${.06*(1-dist/120)})`;
+          ctx.lineWidth=.5;ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+init();
+</script>
+</body>
+</html>
